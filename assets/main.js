@@ -88,6 +88,7 @@ function drawFrame() {
     socket.on("head", server_head => {
         heads = server_head;
     });
+    move();
     makeFullscreen();
     const ctx = canvas.getContext("2d");
     drawBackground(ctx);
