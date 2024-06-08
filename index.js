@@ -34,63 +34,72 @@ function addHead(socket) {
         y: random(0, 600),
     };
     heads.push(head);
-    sockets.forEach(socket => socket.emit("headd", head));
-}
-
-function move(socket) {
-    socket.on("move_left", client_head => {
-        playerHead = client_head
-        playerHead[1] -= 5
-        for (let i = 0; i < heads.length; i++) {
-            if (heads[i].id === playerHead.id) {
-                socket.emit("headd", heads);
-            }
-        }
-    })
-
-    socket.on("move_right", client_head => {
-        playerHead = client_head
-        playerHead[1] += 5
-        for (let i = 0; i < heads.length; i++) {
-            if (heads[i].id === playerHead.id) {
-                socket.emit("headd", heads);
-            }
-        }
-    })
-
-    socket.on("move_up", client_head => {
-        playerHead = client_head
-        playerHead[2] -= 5
-        for (let i = 0; i < heads.length; i++) {
-            if (heads[i].id === playerHead.id) {
-                socket.emit("headd", heads);
-            }
-        }
-    })
-
-    socket.on("move_down", client_head => {
-        playerHead = client_head
-        playerHead[2] += 5
-        for (let i = 0; i < heads.length; i++) {
-            if (heads[i].id === playerHead.id) {
-                socket.emit("headd", heads);
-            }
-        }
-    })
+    socket.emit("headd", head);
 }
 
 io.on("connection", (socket) => {
     sockets.push(socket);
     socket.emit("eda", food);
-    move(socket); // Передаем socket в функцию move
+
     addHead(socket);
     sockets.forEach(socket => socket.emit("head", heads));
-});
 
+    socket.on("move_left", (client_head) => {
+        playerHead = client_head;
+        console.log("лева")
+        playerHead.x -= 5;
+        for (let i = 0; i<heads.length; i++){
+            if(heads[i].id == playerHead.id){
+                heads[i] = playerHead;
+            }
+        }
+        socket.emit("headd", playerHead)
+        io.emit("head", heads);
+    });
+
+    socket.on("move_right", client_head => {
+        console.log("права", client_head)
+        playerHead = client_head;
+        playerHead.x += 5;
+        for (let i = 0; i<heads.length; i++){
+            if(heads[i].id == playerHead.id){
+                heads[i] = playerHead;
+            }
+        }
+        socket.emit("headd", playerHead)
+        io.emit("head", heads);
+    });
+
+    socket.on("move_up", client_head => {
+        playerHead = client_head;
+        playerHead.y -= 5;
+        console.log("вdееерх")
+        for (let i = 0; i<heads.length; i++){
+            if(heads[i].id == playerHead.id){
+                heads[i] = playerHead;
+            }
+        }
+        socket.emit("headd", playerHead)
+        io.emit("head", heads);
+    });
+
+    socket.on("move_down", client_head => {
+        console.log("ниииз")
+        playerHead = client_head;
+        playerHead.y += 5;
+        for (let i = 0; i<heads.length; i++){
+            if(heads[i].id == playerHead.id){
+                heads[i] = playerHead;
+            }
+        }
+        socket.emit("headd", playerHead)
+        io.emit("head", heads);
+    });
+});
 setInterval(() => {
     addFood();
     removeOldEda();
-    move(socket); // Передаем socket в функцию move
+
     sockets.forEach(socket => socket.emit("head", heads));
 }, 1000);
 
@@ -104,11 +113,3 @@ app.use(express.static(__dirname + "/assets"));
 http.listen(3000, () => {
     console.log("Сервер запущен на порту 3000");
 });
-// function move() {
-//     socket.on("move_left", client_head => {
-//         playerHead = client_head;
-//         playerHead[1] -= 5;
-
-//         }
-//     });
-// }

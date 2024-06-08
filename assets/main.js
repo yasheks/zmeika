@@ -10,6 +10,8 @@ let tela = [];
 let heads = [];
 let head = [];
 
+let last_key_press_timestamp = 0
+
 const images = {
     "head": "images/head.png",
     "telo": "images/telo.png",
@@ -61,8 +63,7 @@ function drawHead(ctx) {
     });
 }
 
-function move() {
-    window.addEventListener('keydown', event => {
+window.addEventListener('keydown', event => {
         console.log(event.key)
         if (event.key == 'a' || event.key == 'A' || event.key == 'ф' || event.key == 'Ф') {
             socket.emit('move_left', head);
@@ -77,22 +78,13 @@ function move() {
             socket.emit('move_down', head);
         }
     });
-}
 
 function drawFrame() {
 
-    socket.on('eda', server_food => {
-        food = server_food;
-
-    });
-    socket.on("head", server_head => {
-        heads = server_head;
-    });
-    move();
     makeFullscreen();
     const ctx = canvas.getContext("2d");
     drawBackground(ctx);
-    console.log(head)
+
 
 
     drawHavka(ctx);
@@ -102,6 +94,14 @@ function drawFrame() {
 function startGame() {
     socket.on("headd", server_head => {
         head = server_head;
+    });
+
+    socket.on('eda', server_food => {
+        food = server_food;
+
+    });
+    socket.on("head", server_head => {
+        heads = server_head;
     });
 
 
