@@ -5,8 +5,7 @@ const io = require("socket.io")(http);
 
 let sockets = [];
 let food = [];
-let heads = [];
-let playerHead = [];
+let heads = {}; // Use an object to store heads by socket ID
 
 function random(a, b) {
     return Math.random() * (b - a) + a;
@@ -27,82 +26,97 @@ function removeOldEda() {
         sockets.forEach(socket => socket.emit("eda", food));
     }
 }
+
 function addHead(socket) {
     const head = {
         id: socket.id,
         x: random(0, 800),
         y: random(0, 600),
+        direction: 'down', // Initial direction
+        moving: false, // Flag for continuous movement
+        tail: [] // Initialize tail array
     };
-    heads.push(head);
+    heads[socket.id] = head;
     socket.emit("headd", head);
 }
 
+function moveHead(socket, direction) {
+    const head = heads[socket.id];
+    if (head) {
+        head.direction = direction;
+        head.moving = true;
+        updateHead(socket);
+    }
+}
+
+function updateHead(socket) {
+    const head = heads[socket.id];
+    if (head) {
+        if (head.moving) {
+            switch (head.direction) {
+                case 'up':
+                    head.y -= 5;
+                    break;
+                case 'down':
+                    head.y += 5;
+                    break;
+                case 'left':
+                    head.x -= 5;
+                    break;
+                case 'right':
+                    head.x += 5;
+                    break;
+            }
+            // Update tail positions
+            if (head.tail.length > 0) {
+                head.tail.pop(); // Remove the last tail element
+                head.tail.unshift({ x: head.x, y: head.y }); // Add new head position to the beginning of the tail
+            }
+        }
+        socket.emit("headd", head);
+        io.emit("head", Object.values(heads));
+    }
+}
+
 io.on("connection", (socket) => {
+    socket.on("tail", (client_tail) => {
+        if (heads[socket.id]) {
+            heads[socket.id].tail = client_tail; // Update the tail positions
+            io.emit("head", Object.values(heads)); // Send updated head positions with tail to all clients
+        }
+    });
+    socket.on("eda", (client_food) => {
+        food = client_food
+        io.emit("eda", food);
+    })
     sockets.push(socket);
-    socket.emit("eda", food);
-
+    socket.emit("eda", food); // Send food to the new client
     addHead(socket);
-    sockets.forEach(socket => socket.emit("head", heads));
 
-    socket.on("move_left", (client_head) => {
-        playerHead = client_head;
-        console.log("лева")
-        playerHead.x -= 5;
-        for (let i = 0; i<heads.length; i++){
-            if(heads[i].id == playerHead.id){
-                heads[i] = playerHead;
-            }
-        }
-        socket.emit("headd", playerHead)
-        io.emit("head", heads);
-    });
+    // Send initial head positions to all clients (including the new client)
+    io.emit("head", Object.values(heads));
 
-    socket.on("move_right", client_head => {
-        console.log("права", client_head)
-        playerHead = client_head;
-        playerHead.x += 5;
-        for (let i = 0; i<heads.length; i++){
-            if(heads[i].id == playerHead.id){
-                heads[i] = playerHead;
-            }
-        }
-        socket.emit("headd", playerHead)
-        io.emit("head", heads);
-    });
+    socket.on("move_left", () => moveHead(socket, 'left'));
+    socket.on("move_right", () => moveHead(socket, 'right'));
+    socket.on("move_up", () => moveHead(socket, 'up'));
+    socket.on("move_down", () => moveHead(socket, 'down'));
 
-    socket.on("move_up", client_head => {
-        playerHead = client_head;
-        playerHead.y -= 5;
-        console.log("вdееерх")
-        for (let i = 0; i<heads.length; i++){
-            if(heads[i].id == playerHead.id){
-                heads[i] = playerHead;
-            }
-        }
-        socket.emit("headd", playerHead)
-        io.emit("head", heads);
-    });
 
-    socket.on("move_down", client_head => {
-        console.log("ниииз")
-        playerHead = client_head;
-        playerHead.y += 5;
-        for (let i = 0; i<heads.length; i++){
-            if(heads[i].id == playerHead.id){
-                heads[i] = playerHead;
-            }
-        }
-        socket.emit("headd", playerHead)
-        io.emit("head", heads);
+
+    socket.on("disconnect", () => {
+        console.log('user disconnected');
+        sockets.splice(sockets.indexOf(socket), 1);
+        delete heads[socket.id]; // Remove head from the object
+        io.emit("head", Object.values(heads)); // Update all clients about disconnected player
     });
 });
+
 setInterval(() => {
     addFood();
     removeOldEda();
-
-    sockets.forEach(socket => socket.emit("head", heads));
+    // No need to send "head" data in the interval here
+    // It's already handled in the "updateHead" function
 }, 1000);
-
 
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
