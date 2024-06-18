@@ -4,13 +4,14 @@ let canvasW;
 let canvasH;
 
 let loaded_images = 0;
-
+let score = 0
 let food = [];
-let tela = [];
+let tail = [];
+
 let heads = [];
 let head = [];
 
-let last_key_press_timestamp = 0
+let last_key_pressed = "s"; // Variable to store the last key pressed
 
 const images = {
     "head": "images/head.png",
@@ -46,6 +47,22 @@ function makeFullscreen() {
     canvasH = canvas.height;
 }
 
+function poedanie(x, y) {
+    let currentSize = food.length;
+
+    food = food.filter((eda) => !(eda.x - 30 <= x && x <= eda.x + 30 && eda.y - 30 <= y && y <= eda.y + 30));
+    socket.emit("eda", food);
+    score += currentSize - food.length;
+    if (currentSize - food.length > 0)tail.unshift({ x: head.x , y: head.y });
+    // Добавляем новую часть хвоста для данного игрока
+    socket.emit("tail", { x: head.x, y: head.y });
+
+    // Удаляем последний элемент хвоста, если он превышает длину
+    if (tail.length > heads.length) {
+        tail.pop();
+    }
+}
+
 function drawBackground(ctx) {
     ctx.fillStyle = "#f5f5dc";
     ctx.fillRect(0, 0, canvasW, canvasH);
@@ -59,54 +76,79 @@ function drawHavka(ctx) {
 
 function drawHead(ctx) {
     heads.forEach((head) => {
-        ctx.drawImage(images.head, head.x - 30, head.y - 50, 30, 50);
+        ctx.drawImage(images.head, head.x - 50, head.y - 50, 50, 50);
     });
 }
-
-window.addEventListener('keydown', event => {
-        console.log(event.key)
-        if (event.key == 'a' || event.key == 'A' || event.key == 'ф' || event.key == 'Ф') {
-            socket.emit('move_left', head);
-        }
-        if (event.key == 'w' || event.key == 'W' || event.key == 'ц' || event.key == 'ц') {
-            socket.emit('move_up', head);
-        }
-        if (event.key == 'd' || event.key == 'D' || event.key == 'в' || event.key == 'В') {
-            socket.emit('move_right', head);
-        }
-        if (event.key == 'ы' || event.key == 'Ы' || event.key == 's' || event.key == 'S') {
-            socket.emit('move_down', head);
-        }
+function drawTail(ctx) {
+    tail.forEach((part) => {
+        ctx.drawImage(images.head, part.x - 50, part.y - 50, 50, 50);
     });
+}
+window.addEventListener('keydown', event => {
+    if (event.key == 'a' || event.key == 'A' || event.key == 'ф' || event.key == 'Ф') {
+        last_key_pressed = 'a';
+
+    }
+    if (event.key == 'w' || event.key == 'W' || event.key == 'ц' || event.key == 'ц') {
+        last_key_pressed = 'w';
+
+    }
+    if (event.key == 'd' || event.key == 'D' || event.key == 'в' || event.key == 'В') {
+        last_key_pressed = 'd';
+
+    }
+    if (event.key == 'ы' || event.key == 'Ы' || event.key == 's' || event.key == 'S') {
+        last_key_pressed = 's';
+
+    }
+});
+
+
+
 
 function drawFrame() {
-
     makeFullscreen();
     const ctx = canvas.getContext("2d");
     drawBackground(ctx);
 
-
-
     drawHavka(ctx);
     drawHead(ctx);
+    drawTail(ctx);
+
+    poedanie(head.x, head.y);
 }
+
 
 function startGame() {
     socket.on("headd", server_head => {
+        tail.unshift({ x: head.x, y: head.y });
         head = server_head;
     });
 
     socket.on('eda', server_food => {
         food = server_food;
-
     });
+
     socket.on("head", server_head => {
         heads = server_head;
     });
 
+    socket.on("tail", server_tail => {
+        tail = server_tail;
+    });
 
-    setInterval(drawFrame, 20);
+    setInterval(() => {
+        if (last_key_pressed === 'a') {
+            socket.emit('move_left', head);
+        } else if (last_key_pressed === 'w') {
+            socket.emit('move_up', head);
+        } else if (last_key_pressed === 'd') {
+            socket.emit('move_right', head);
+        } else if (last_key_pressed === 's') {
+            socket.emit('move_down', head);
+        }
+        drawFrame();
+    }, 20);
 }
 
 loadAllImages();
-
