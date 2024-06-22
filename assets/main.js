@@ -11,7 +11,7 @@ let tail = [];
 let heads = [];
 let head = [];
 
-let last_key_pressed = "s"; // Variable to store the last key pressed
+let last_key_pressed = "s";
 
 const images = {
     "head": "images/head.png",
@@ -54,13 +54,12 @@ function poedanie(x, y) {
     socket.emit("eda", food);
     score += currentSize - food.length;
     if (currentSize - food.length > 0)tail.unshift({ x: head.x , y: head.y });
-    // Добавляем новую часть хвоста для данного игрока
-    socket.emit("tail", { x: head.x, y: head.y });
 
-    // Удаляем последний элемент хвоста, если он превышает длину
     if (tail.length > heads.length) {
         tail.pop();
     }
+    head["tail"] = tail
+    socket.emit("tail", head);
 }
 
 function drawBackground(ctx) {
@@ -80,9 +79,13 @@ function drawHead(ctx) {
     });
 }
 function drawTail(ctx) {
-    tail.forEach((part) => {
-        ctx.drawImage(images.head, part.x - 50, part.y - 50, 50, 50);
+
+    heads.forEach((tail) => {
+        tail.forEach((part) => {
+            ctx.drawImage(images.head, part.x - 50, part.y - 50, 50, 50);
+        });
     });
+
 }
 window.addEventListener('keydown', event => {
     if (event.key == 'a' || event.key == 'A' || event.key == 'ф' || event.key == 'Ф') {
@@ -121,6 +124,8 @@ function drawFrame() {
 
 function startGame() {
     socket.on("headd", server_head => {
+
+        tail = head.tail;
         tail.unshift({ x: head.x, y: head.y });
         head = server_head;
     });
@@ -133,9 +138,7 @@ function startGame() {
         heads = server_head;
     });
 
-    socket.on("tail", server_tail => {
-        tail = server_tail;
-    });
+
 
     setInterval(() => {
         if (last_key_pressed === 'a') {
