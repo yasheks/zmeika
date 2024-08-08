@@ -11,7 +11,7 @@ let tail = [];
 let heads = [];
 let head = [];
 
-let last_key_pressed = "s";
+let last_key_pressed = "s"; // Variable to store the last key pressed
 
 const images = {
     "head": "images/head.png",
@@ -53,14 +53,14 @@ function poedanie(x, y) {
     food = food.filter((eda) => !(eda.x - 30 <= x && x <= eda.x + 30 && eda.y - 30 <= y && y <= eda.y + 30));
     socket.emit("eda", food);
     score += currentSize - food.length;
-    if (currentSize - food.length > 0)tail.unshift({ x: head.x , y: head.y });
+    if (currentSize - food.length > 0) tail.unshift({x: head.x, y: head.y});
 
     if (tail.length > heads.length) {
         tail.pop();
     }
-    head["tail"] = tail
-    socket.emit("tail", head);
+    socket.emit("tail", tail); // Отправляем информацию о хвосте на сервер
 }
+
 
 function drawBackground(ctx) {
     ctx.fillStyle = "#f5f5dc";
@@ -79,14 +79,15 @@ function drawHead(ctx) {
     });
 }
 function drawTail(ctx) {
-
-    heads.forEach((tail) => {
-        tail.forEach((part) => {
-            ctx.drawImage(images.head, part.x - 50, part.y - 50, 50, 50);
+    heads.forEach((player) => {
+        player.tail.forEach((part) => {
+            ctx.drawImage(images.telo, part.x - 50, part.y - 50, 50, 50);
         });
     });
-
 }
+
+
+
 window.addEventListener('keydown', event => {
     if (event.key == 'a' || event.key == 'A' || event.key == 'ф' || event.key == 'Ф') {
         last_key_pressed = 'a';
@@ -107,8 +108,6 @@ window.addEventListener('keydown', event => {
 });
 
 
-
-
 function drawFrame() {
     makeFullscreen();
     const ctx = canvas.getContext("2d");
@@ -122,23 +121,33 @@ function drawFrame() {
 }
 
 
+
 function startGame() {
     socket.on("headd", server_head => {
-
-        tail = head.tail;
-        tail.unshift({ x: head.x, y: head.y });
+        tail.unshift({x: head.x, y: head.y});
         head = server_head;
     });
 
     socket.on('eda', server_food => {
         food = server_food;
     });
+    socket.on("all_heads", all_heads => {
+    heads = all_heads;
+});
+
+socket.on("all_tails", all_tails => {
+    all_tails.forEach((player_tails, index) => {
+        heads[index].tail = player_tails;
+    });
+});
 
     socket.on("head", server_head => {
         heads = server_head;
     });
 
-
+    socket.on("tail", server_tail => {
+        tail = server_tail;
+    });
 
     setInterval(() => {
         if (last_key_pressed === 'a') {
