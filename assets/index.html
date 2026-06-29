@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>PS BOSS - Battle Royale</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<div id="menu">
+    <h1 style="margin-bottom: 20px;">PS BOSS</h1>
+    <div class="character-list">
+        <div class="char-card" onclick="joinGame(1)">
+            <h3>1. Вергазова</h3>
+            <p>ХП: 300. Атака: 3 билета.<br>E: Сон (5с).<br>Q: Рывок + Хил 100%</p>
+        </div>
+        <div class="char-card" onclick="joinGame(2)">
+            <h3>2. Марченко</h3>
+            <p>ХП: 200. Атака: Снайпер.<br>E: Инверсия управления.<br>Q: Зона замедления</p>
+        </div>
+        <div class="char-card" onclick="joinGame(3)">
+            <h3>3. Мальцева</h3>
+            <p>ХП: 150. Атака: Дробь плюсиков.<br>E: Флешка (Сало).<br>Q: Бот-помощник</p>
+        </div>
+        <div class="char-card" onclick="joinGame(4)">
+            <h3>4. Мурашкина</h3>
+            <p>ХП: 350. Атака: Линейка.<br>E: РПГ (взрыв).<br>Q: Режим Танка</p>
+        </div>
+        <div class="char-card" onclick="joinGame(5)">
+            <h3>5. Томчук</h3>
+            <p>ХП: 250. Атака: Лазер (Стамина).<br>E: ПЕРДЁЖ.<br>Q: Шампунь (ускорение)</p>
+        </div>
+        <div class="char-card" onclick="joinGame(6)">
+            <h3>6. Никандров</h3>
+            <p>ХП: 220. Атака: Рыба-хлыст (слоу).<br>E: Спининг (Хук).<br>Q: Найс Рыбалка (Акула)</p>
+        </div>
+        <div class="char-card" onclick="joinGame(7)">
+            <h3>7. Никитос</h3>
+            <p>ХП: 200. Атака: мусор с рюкзака.<br>E: Съебаться (Паралл. мир).<br>Q: Спиздить скилл</p>
+        </div>
+    </div>
+</div>
+
+<div id="game-ui" style="display: none;">
+    <div id="hp-bar-container">
+        <div id="hp-bar-fill"></div>
+        <span id="hp-text">100 / 100</span>
+    </div>
+    <div id="skills-container">
+        <div class="skill-box">
+            <div class="skill-name" id="skill-e-name">Скилл</div>
+            <div class="skill-icon" id="skill-e-icon"><div id="skill-e-cooldown"></div></div>
+            <div class="skill-key">E</div>
+        </div>
+        <div class="skill-box">
+            <div class="skill-name" id="skill-q-name">Ульта</div>
+            <div class="skill-icon" id="skill-q-icon"><div id="skill-q-charge"></div></div>
+            <div class="skill-key">Q</div>
+        </div>
+    </div>
+</div>
+
+<div id="minimap-container">
+    <canvas id="minimap" width="150" height="150"></canvas>
+    <div id="coords">X: 0 Y: 0</div>
+</div>
+
+<canvas id="screen"></canvas>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="sound-manager.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>
